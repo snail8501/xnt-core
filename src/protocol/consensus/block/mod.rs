@@ -847,7 +847,8 @@ impl Block {
     /// Verify that block digest is less than threshold and integral.
     pub fn pow_verify(&self, target: Digest, consensus_rule_set: ConsensusRuleSet) -> bool {
         let auth_paths = self.pow_mast_paths();
-        self.header()
+        match self
+            .header()
             .pow
             .validate(
                 auth_paths,
@@ -855,7 +856,14 @@ impl Block {
                 consensus_rule_set,
                 self.header().prev_block_digest,
             )
-            .is_ok()
+        {
+            Ok(()) => true,
+            Err(e) => {
+                tracing::error!("pow_verify validate error: {:?}", e);
+                println!("pow_verify validate error: {:?}",  e);
+                false
+            }
+        }
     }
 
     pub fn set_header_pow(&mut self, pow: BlockPow) {
